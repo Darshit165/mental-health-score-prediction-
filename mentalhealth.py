@@ -5,3 +5,7 @@ import seaborn as sns
 
 df= pd.read_csv('D:\project\mental health score prediction\Student Social Media And Mental Health Impact.csv')
 print(df.head())
+print(df.info())
+print(df.describe())
+print(df.isnull().sum())
+print(df.duplicated().sum())
