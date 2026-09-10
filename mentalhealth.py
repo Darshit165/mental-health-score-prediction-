@@ -48,3 +48,30 @@ plt.title('Sleep Hours vs Mental Health Score')
 plt.xlabel('Sleep Hours Per Night')
 plt.ylabel('Mental Health Score')
 plt.show()
+#check outliers in the data using iqr method
+num_features = df.select_dtypes(include='number')
+Q1 = num_features.quantile(0.25)
+Q3 = num_features.quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+outliers = (num_features < lower_bound) | (num_features > upper_bound)
+print("Number of outliers in each column:\n", outliers.sum())
+#only 24 outliers in the data out of 5000 rows, we can ignore them for now, but we can also remove them if needed
+#data cleaning remove duplicate values, missing values
+#Two real issues to fix here — everything else in this dataset is already clean, so we don't manufacture cleaning steps that aren't needed.
+#the rest of that student's data (age, study hours, stress level, etc.) is still valid and useful — throwing away the whole row over one bad value wastes good data. Clipping caps the impossible value at the nearest realistic one (0 hours) without discarding everything else about that student.
+print(df.describe())
+#Converting negative or unrealitstic value to realistic value
+df['Physical_Activity_Hours'] = df['Physical_Activity_Hours'].clip(lower=0)
+#We're not dropping any columns either — every column here has a plausible reason to matter for predicting mental health, and we already confirmed none of them are empty or constant.
+print(df.describe())
+print(df.shape)
+#Skewness
+#What skewness is: a measure of how lopsided a numeric column's distribution is. A value near 0 means roughly symmetric (bell-shaped); a large positive or negative value means the data leans heavily to one side, with a long tail.
+#Why it matters: models like Linear Regression assume features are roughly well-behaved. A heavily skewed column (think: a long tail of extreme values) can quietly drag the model's predictions in that direction. Tree-based models like Random Forest don't care about skew — but since we're also training a Linear Regression baseline, it's worth fixing.
+num_cols = df.select_dtypes(include='number')
+num_cols.skew()
+# near to 0 -> Centralized (0.01, 0.002)
+# negative -> Left Skewed (-1.56)
+# poistive (greater than 0) -> Right Skewed (1.256)
