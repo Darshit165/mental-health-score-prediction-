@@ -75,3 +75,16 @@ num_cols.skew()
 # near to 0 -> Centralized (0.01, 0.002)
 # negative -> Left Skewed (-1.56)
 # poistive (greater than 0) -> Right Skewed (1.256)
+#feature engineering
+#Feature Engineering 
+#Country has 111 unique values in this dataset — one-hot encoding that directly would add 110+ mostly-empty columns, which hurts the model far more than it helps (this is called high cardinality).
+#Dropping Country entirely throws away real signal — a student's country genuinely correlates with things like internet access, culture, and sleep norms
+#The fix: keep the top 10 most frequent countries as their own category, and bucket everything else into "Other". We keep the signal that matters and lose the noise that doesn't.
+top_countries = df['Country'].value_counts().index[:10].tolist()
+def group_countries(country):
+  if country in top_countries:
+    return country
+  else:
+    return 'Other'
+df['Grouped_country'] = df['Country'].apply(group_countries)
+print(df['Grouped_country'].value_counts())
