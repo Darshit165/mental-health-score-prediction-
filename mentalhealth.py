@@ -88,3 +88,21 @@ def group_countries(country):
     return 'Other'
 df['Grouped_country'] = df['Country'].apply(group_countries)
 print(df['Grouped_country'].value_counts())
+#Train test split
+from sklearn.model_selection import train_test_split
+#encoding strategy
+#Before we jump into code, let's decide how each categorical column should be encoded — this decision matters more than the code itself.
+#Stress_Level → Ordinal Encoding. Its categories have a real, meaningful order: Low < Medium < High < Very High. We already saw in EDA (section 4.3) that the score drops step by step as stress increases — encoding it as 0, 1, 2, 3 preserves that order for the model.
+#Gender, Academic_Level, Most_Used_Platform, Purpose_Of_Use, Country_Grouped → One-Hot Encoding. These categories have no natural order — "Instagram" isn't "greater than" "LinkedIn". One-hot encoding creates a separate 0/1 column per category so the model doesn't accidentally assume a false ranking.
+print(df.columns)
+
+schewed_col=["Study_Hours"]
+numeric_col=["Age","Avg_Daily_Usage_Hours","Daily_Unlocks",'Physical_Activity_Hours', 'Sleep_Hours_Per_Night']
+oridinal_col=["Stress_Level",]
+normal_col=["Gender","Academic_Level","Most_Used_Platform", "Purpose_Of_Use", "Grouped_country"]
+
+feature_col=numeric_col+oridinal_col+normal_col+schewed_col
+x=df[feature_col]
+y=df["Mental_Health_Score"]
+
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.30,random_state=42)
