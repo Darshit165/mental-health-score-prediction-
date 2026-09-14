@@ -221,3 +221,37 @@ Random_search.fit(x_train,y_train)
 
 print(Random_search.best_params_)
 print(Random_search.best_score_)
+
+#XGboost train default
+xgb_pipeline = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('regressor', XGBRegressor(random_state=42))
+])
+
+# Train
+xgb_pipeline.fit(x_train, y_train)
+
+# Prediction
+xgb_pred = xgb_pipeline.predict(x_test)
+xgb_pred_train = xgb_pipeline.predict(x_train)
+
+# Training R2
+xgb_r2_train = r2_score(y_train, xgb_pred_train)
+
+# Testing R2
+xgb_r2_test = r2_score(y_test, xgb_pred)
+
+# Other metrics
+xgb_mae = mean_absolute_error(y_test, xgb_pred)
+xgb_mse = mean_squared_error(y_test, xgb_pred)
+xgb_rmse = np.sqrt(xgb_mse)
+
+print("XGBoost Default Model")
+print("----------------------")
+print("R2 score on training:", xgb_r2_train)
+print("R2 score on testing:", xgb_r2_test)
+print("MAE:", xgb_mae)
+print("MSE:", xgb_mse)
+print("RMSE:", xgb_rmse)
+
+
