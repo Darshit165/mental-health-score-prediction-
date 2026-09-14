@@ -625,3 +625,12 @@ print("MODEL PERFORMANCE COMPARISON")
 print("=" * 90)
 
 print(comparison_df)
+
+#save model
+import joblib
+
+# Save the best tuned XGBoost pipeline
+joblib.dump(
+    best_xgb,
+    "Mental_Health_XGBoost_Best_Model.pkl"
+)
