@@ -255,3 +255,39 @@ print("MSE:", xgb_mse)
 print("RMSE:", xgb_rmse)
 
 
+#tunnig xg model with random search cv
+
+xgb_param_grid = {
+    
+    "regressor__n_estimators": [100, 200, 300, 500, 700],
+    
+    "regressor__max_depth": [3, 4, 5, 6, 8, 10],
+    
+    "regressor__learning_rate": [0.01, 0.03, 0.05, 0.1, 0.2],
+    
+    "regressor__subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+    
+    "regressor__colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+    
+    "regressor__min_child_weight": [1, 3, 5, 7],
+    
+    "regressor__gamma": [0, 0.1, 0.2, 0.5, 1]
+}
+
+xgb_random_search = RandomizedSearchCV(
+    estimator=xgb_pipeline,
+    param_distributions=xgb_param_grid,
+    n_iter=30,
+    cv=5,
+    scoring="r2",
+    verbose=2,
+    n_jobs=-1,
+    random_state=42
+)
+
+xgb_random_search.fit(x_train, y_train)
+
+print(xgb_random_search.best_params_)
+print(xgb_random_search.best_score_)
+
+
