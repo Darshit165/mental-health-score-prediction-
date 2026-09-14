@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pandas.core.tools import numeric
 #load data
-df= pd.read_csv('D:\project\mental health score prediction\Student Social Media And Mental Health Impact.csv')
+df= pd.read_csv('F:\\project\\menal health prediction\\Student Social Media And Mental Health Impact.csv')
 print(df.head())
 #check data types and missing values, duplicate value , check statistics of the data
 print(df.info())
@@ -106,3 +106,72 @@ x=df[feature_col]
 y=df["Mental_Health_Score"]
 
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.30,random_state=42)
+
+
+
+#Preprocessing using ColumnTransformer
+#Our columns need different treatment:
+#Study_Hours (the skewed one) → impute → log1p transform → scale
+#The other numeric columns → impute → scale (no skew to fix)
+#Stress_Level → impute → OrdinalEncoder with an explicit order
+#Categorical columns with no natural order → impute → OneHotEncoder
+
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler,OneHotEncoder,OrdinalEncoder,FunctionTransformer
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error,mean_absolute_error,r2_score
+from xgboost import XGBRegressor
+from sklearn.model_selection import RandomizedSearchCV,GridSearchCV
+
+
+#skew pipeline
+skew_pipeline=Pipeline(steps=[
+    ("log1p",FunctionTransformer(np.log1p)),
+    ("scale",StandardScaler())
+])
+#other number columns pipeline
+number_pipeline=Pipeline(steps=[
+    ("scale",StandardScaler())
+])
+#ordinal pipeline
+oridinal_pipeline=Pipeline(steps=[
+    ("ordinal",OrdinalEncoder(categories=[["Low","Medium","High","Very High"]]))
+])
+#nominal pipeline
+nominal_pipeline=Pipeline(steps=[
+    ("onehot",OneHotEncoder(handle_unknown="ignore"))
+])
+
+preprocessor=ColumnTransformer(transformers=[
+    ("skew",skew_pipeline,schewed_col),
+    ("number",number_pipeline,numeric_col),
+    ("oridinal",oridinal_pipeline,oridinal_col),
+    ("nominal",nominal_pipeline,normal_col)
+])
+
+
+#Baseline: Linear Regression
+lr_pipeline = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('regressor', LinearRegression())
+])
+
+lr_pipeline.fit(x_train,y_train)
+lr_pred = lr_pipeline.predict(x_test)
+lr_pred_train = lr_pipeline.predict(x_train)
+
+lr_r2_train=r2_score(y_train,lr_pred_train)
+lr_r2_test=r2_score(y_test,lr_pred)
+lr_mae=mean_absolute_error(y_test,lr_pred)
+lr_mse=mean_squared_error(y_test,lr_pred)
+lr_rmse=np.sqrt(lr_mse)
+
+print("R2 score on training:",lr_r2_train)
+print("R2 score on testing:",lr_r2_test)
+print("MAE:",lr_mae)
+print("MSE:",lr_mse)
+print("RMSE:",lr_rmse)
+
