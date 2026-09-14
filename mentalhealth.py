@@ -513,3 +513,115 @@ if test_r2 > 0.8973:
     print("\nOptuna performed BETTER than Random Search.")
 else:
     print("\nRandom Search is still BETTER than Optuna.")
+
+
+#evaluation 
+# 1. Function to calculate regression metrics
+def evaluate_model(model_name, model, X_train, y_train, X_test, y_test):
+
+    # Predictions
+    train_pred = model.predict(X_train)
+    test_pred = model.predict(X_test)
+    # Training metrics
+    train_r2 = r2_score(y_train, train_pred)
+    # Testing metrics
+    test_r2 = r2_score(y_test, test_pred)
+    mae = mean_absolute_error(y_test, test_pred)
+    mse = mean_squared_error(y_test, test_pred)
+    rmse = np.sqrt(mse)
+    # Overfitting gap
+    r2_gap = train_r2 - test_r2
+    return {
+        "Model": model_name,
+        "Train R²": train_r2,
+        "Test R²": test_r2,
+        "MAE": mae,
+        "MSE": mse,
+        "RMSE": rmse,
+        "R² Gap": r2_gap
+    }
+# 2. Evaluate all models
+results = []
+# Linear Regression
+results.append(
+    evaluate_model(
+        "Linear Regression",
+        lr_pipeline,
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )
+)
+# Random Forest - Default
+results.append(
+    evaluate_model(
+        "Random Forest - Default",
+        rf_pipeline,
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )
+)
+# Random Forest - RandomizedSearchCV
+best_rf = Random_search.best_estimator_
+results.append(
+    evaluate_model(
+        "Random Forest - Tuned",
+        best_rf,
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )
+)
+# XGBoost - Default
+results.append(
+    evaluate_model(
+        "XGBoost - Default",
+        xgb_pipeline,
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )
+)
+# XGBoost - RandomizedSearchCV
+best_xgb = xgb_random_search.best_estimator_
+results.append(
+    evaluate_model(
+        "XGBoost - Random Search",
+        best_xgb,
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )
+)
+# XGBoost - Optuna
+results.append(
+    evaluate_model(
+        "XGBoost - Optuna",
+        optuna_focused_pipeline,
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )
+)
+# 3. Create comparison DataFrame
+comparison_df = pd.DataFrame(results)
+# 4. Round values
+comparison_df = comparison_df.round(4)
+# 5. Sort by Test R²
+comparison_df = comparison_df.sort_values(
+    by="Test R²",
+    ascending=False
+).reset_index(drop=True)
+# 6. Display final table
+print("=" * 90)
+print("MODEL PERFORMANCE COMPARISON")
+print("=" * 90)
+
+display(comparison_df)
