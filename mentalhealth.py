@@ -197,3 +197,27 @@ print("R2 score on testing:",rf_r2_test)
 print("MAE:",rf_mae)
 print("MSE:",rf_mse)
 print("RMSE:",rf_rmse)
+
+#Hyper parameter tunning on Random forest
+
+param_grid={
+    "regressor__n_estimators":[500,700,900],
+    "regressor__max_depth":[60,70,80],
+    "regressor__min_samples_split":[2,5,10],
+    "regressor__min_samples_leaf":[1,2,3]
+}
+
+Random_search=RandomizedSearchCV(
+    estimator=rf_pipeline,
+    param_distributions=param_grid,
+    n_iter=10,
+    cv=5,
+    verbose=2,
+    n_jobs=-1,
+    random_state=42
+)
+
+Random_search.fit(x_train,y_train)
+
+print(Random_search.best_params_)
+print(Random_search.best_score_)
