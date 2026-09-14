@@ -624,4 +624,4 @@ print("=" * 90)
 print("MODEL PERFORMANCE COMPARISON")
 print("=" * 90)
 
-display(comparison_df)
+print(comparison_df)
