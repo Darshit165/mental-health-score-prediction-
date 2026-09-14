@@ -175,3 +175,25 @@ print("MAE:",lr_mae)
 print("MSE:",lr_mse)
 print("RMSE:",lr_rmse)
 
+#Random Forest (default settings)
+
+rf_pipeline = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('regressor', RandomForestRegressor(random_state=42))
+])
+
+rf_pipeline.fit(x_train,y_train)
+rf_pred = rf_pipeline.predict(x_test)
+rf_pred_train = rf_pipeline.predict(x_train)
+
+rf_r2_train=r2_score(y_train,rf_pred_train)
+rf_r2_test=r2_score(y_test,rf_pred)
+rf_mae=mean_absolute_error(y_test,rf_pred)
+rf_mse=mean_squared_error(y_test,rf_pred)
+rf_rmse=np.sqrt(rf_mse)
+
+print("R2 score on training:",rf_r2_train)
+print("R2 score on testing:",rf_r2_test)
+print("MAE:",rf_mae)
+print("MSE:",rf_mse)
+print("RMSE:",rf_rmse)
