@@ -290,4 +290,226 @@ xgb_random_search.fit(x_train, y_train)
 print(xgb_random_search.best_params_)
 print(xgb_random_search.best_score_)
 
+best_xgb = xgb_random_search.best_estimator_
 
+# Predictions
+xgb_tuned_pred = best_xgb.predict(x_test)
+xgb_tuned_pred_train = best_xgb.predict(x_train)
+
+# Metrics
+xgb_tuned_r2_train = r2_score(y_train, xgb_tuned_pred_train)
+xgb_tuned_r2_test = r2_score(y_test, xgb_tuned_pred)
+
+xgb_tuned_mae = mean_absolute_error(y_test, xgb_tuned_pred)
+xgb_tuned_mse = mean_squared_error(y_test, xgb_tuned_pred)
+xgb_tuned_rmse = np.sqrt(xgb_tuned_mse)
+
+print("XGBoost Tuned Model")
+print("-------------------")
+print("R2 on training:", xgb_tuned_r2_train)
+print("R2 on testing :", xgb_tuned_r2_test)
+print("MAE           :", xgb_tuned_mae)
+print("MSE           :", xgb_tuned_mse)
+print("RMSE          :", xgb_tuned_rmse)
+
+print("R2 gap:", xgb_tuned_r2_train - xgb_tuned_r2_test)
+
+
+#train model with xg boost with tunning optuna
+
+import optuna
+from sklearn.model_selection import cross_val_score
+
+# 1. Objective Function
+def objective(trial):
+
+    xgb_model = XGBRegressor(
+
+        # Number of boosting rounds
+        n_estimators=trial.suggest_int(
+            "n_estimators",
+            500,
+            1000,
+            step=50
+        ),
+
+        # Learning rate
+        learning_rate=trial.suggest_float(
+            "learning_rate",
+            0.015,
+            0.06,
+            log=True
+        ),
+
+        # Tree depth
+        max_depth=trial.suggest_int(
+            "max_depth",
+            5,
+            10
+        ),
+
+        # Minimum child weight
+        min_child_weight=trial.suggest_int(
+            "min_child_weight",
+            1,
+            5
+        ),
+
+        # Row sampling
+        subsample=trial.suggest_float(
+            "subsample",
+            0.80,
+            1.0
+        ),
+
+        # Feature sampling
+        colsample_bytree=trial.suggest_float(
+            "colsample_bytree",
+            0.80,
+            1.0
+        ),
+
+        # Minimum loss reduction
+        gamma=trial.suggest_float(
+            "gamma",
+            0.0,
+            0.3
+        ),
+
+        # L1 regularization
+        reg_alpha=trial.suggest_float(
+            "reg_alpha",
+            0.0,
+            0.5
+        ),
+
+        # L2 regularization
+        reg_lambda=trial.suggest_float(
+            "reg_lambda",
+            0.05,
+            5.0,
+            log=True
+        ),
+
+        random_state=42,
+        n_jobs=-1
+    )
+    # Pipeline
+    pipeline = Pipeline(steps=[
+        ("preprocessor", preprocessor),
+        ("regressor", xgb_model)
+    ])
+    # 5-Fold Cross Validation
+    scores = cross_val_score(
+        pipeline,
+        x_train,
+        y_train,
+        cv=5,
+        scoring="r2",
+        n_jobs=-1
+    )
+    return scores.mean()
+
+# 2. Create Optuna Study
+study_focused = optuna.create_study(
+    direction="maximize",
+    sampler=optuna.samplers.TPESampler(
+        seed=42
+    )
+)
+
+# 3. Run Optuna
+study_focused.optimize(
+    objective,
+    n_trials=50,
+    show_progress_bar=True
+)
+
+# 4. Best Results
+print("\n" + "=" * 60)
+print("OPTUNA FOCUSED SEARCH RESULTS")
+print("=" * 60)
+
+print("\nBest CV R2:")
+print(f"{study_focused.best_value:.6f}")
+
+print("\nBest Parameters:")
+
+for parameter, value in study_focused.best_params.items():
+    print(f"{parameter}: {value}")
+
+# 5. Create Final XGBoost
+best_xgb_optuna = XGBRegressor(
+    **study_focused.best_params,
+    random_state=42,
+    n_jobs=-1
+)
+
+# 6. Final Pipeline
+optuna_focused_pipeline = Pipeline(steps=[
+    ("preprocessor", preprocessor),
+    ("regressor", best_xgb_optuna)
+])
+
+# 7. Train
+optuna_focused_pipeline.fit(
+    x_train,
+    y_train
+)
+
+# 8. Predictions
+train_pred = optuna_focused_pipeline.predict(x_train)
+
+test_pred = optuna_focused_pipeline.predict(x_test)
+
+
+
+# 9. Evaluation
+train_r2 = r2_score(
+    y_train,
+    train_pred
+)
+
+test_r2 = r2_score(
+    y_test,
+    test_pred
+)
+
+mae = mean_absolute_error(
+    y_test,
+    test_pred
+)
+
+mse = mean_squared_error(
+    y_test,
+    test_pred
+)
+
+rmse = np.sqrt(mse)
+r2_gap = train_r2 - test_r2
+
+# 10. Final Results
+print("\n" + "=" * 60)
+print("FINAL OPTUNA XGBOOST MODEL")
+print("=" * 60)
+
+print(f"\nTrain R2 : {train_r2:.6f}")
+print(f"Test R2  : {test_r2:.6f}")
+print(f"MAE      : {mae:.6f}")
+print(f"MSE      : {mse:.6f}")
+print(f"RMSE     : {rmse:.6f}")
+print(f"R2 Gap   : {r2_gap:.6f}")
+
+# 11. Compare Against Random Search
+
+print("\n" + "=" * 60)
+print("COMPARISON")
+print("=" * 60)
+
+print(f"\nRandom Search Test R2 : 0.8973")
+print(f"Optuna Test R2        : {test_r2:.4f}")
+
+if test_r2 > 0.8973:
+    print("\nOptuna performed BETTER than Random Search.")
+else:
+    print("\nRandom Search is still BETTER than Optuna.")
